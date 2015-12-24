@@ -99,15 +99,13 @@ namespace MultiPing {
       _fails = -10;
       if (gethost) {
         Console.WriteLine("gethost " + ip);
+        getHostnameAsync();
+        hostname = "DNS search";
+
         // Delay this (enqueue on UI thread) to prevent UI to freeze on the first click
         MainWindow.disp.BeginInvoke(DispatcherPriority.Background,
           new Action(() => {
-            getHostnameAsync();
-            hostname = "DNS search";
-            MainWindow.disp.BeginInvoke(DispatcherPriority.ContextIdle,
-              new Action(() => {
                 mac = GetMacAddress(ip.ToString());
-              }));
           }));
       }
     }

@@ -3,32 +3,21 @@
  * Idea by Jan Øyvind Lyche */
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 using System.Net;
 using System.Net.NetworkInformation;
-using System.Threading;
 using System.Net.Sockets;
 using System.Windows.Threading;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Text.RegularExpressions;
 using System.ComponentModel;
 using System.Reflection;
-using OxyPlot;
-
+using System.Threading;
 
 namespace MultiPing {
   /// <summary>
@@ -65,7 +54,7 @@ namespace MultiPing {
       pingResults = new ObservableCollection<PingResult>();
       Results.ItemsSource = pingResults;
       GetIPButton_Click(null, null);
-      for (int i=0; i<255; i++)
+      for (int i=0; i<255; i++) 
         pingSender[i] = new Ping();
       manuf = File.ReadAllText("manuf.txt");
       mainWin = this;
@@ -90,12 +79,18 @@ namespace MultiPing {
     }
 
 
-    public void doPing(Ping pingSender, string who) {
-      int timeout = 2000;
+    public async void doPing(Ping pingSender, string who) {
+      int timeout = 1000;
       try {
         pingSender.PingCompleted += new PingCompletedEventHandler(PingCompletedCallback);
         pingSender.SendAsync(who, timeout, who);
-      } catch (PingException) { /*pingSender.SendAsyncCancel(); Thread.Sleep(2000); pingSender.SendAsync(who, timeout, who);*/ }
+      } catch (PingException ex) {
+        Console.WriteLine(who + " PingException");
+      } catch (InvalidOperationException ex) {
+        Console.WriteLine(who + " InvalidOperationException");
+        await Task.Delay(2000);
+        pingSender.SendAsyncCancel();
+      } //Thread.Sleep(2000); pingSender.SendAsync(who, timeout, who); }
     }
 
 
@@ -156,7 +151,7 @@ namespace MultiPing {
               hits.fails = 10;
           }
         }
-        speed.model.Clean(Int32.Parse(addr.Substring(addr.LastIndexOf('.')+1)));
+        speed.model.Clean(int.Parse(addr.Substring(addr.LastIndexOf('.')+1)));
         //speed.Plot1.InvalidatePlot(true);
 
       }
@@ -196,10 +191,11 @@ namespace MultiPing {
       try {
         for (int i = 1; i < 255; i++) {
           doPing(pingSender[i], IPBox.Text.Substring(0, IPBox.Text.LastIndexOf('.')) + "." + i);
-          //Thread.Sleep(100);
+          //await Task.Delay(10);
+          //Thread.Sleep(1000);
         }
       }
-      catch (InvalidOperationException) { }; // Catch error of ping already being sent
+      catch (InvalidOperationException) { Console.WriteLine("Failed in button"); }; // Catch error of ping already being sent
     }
 
     private void GetIPButton_Click(object sender, RoutedEventArgs e) {
