@@ -22,15 +22,16 @@ namespace MultiPing {
  
     public string Title { get; private set; }
 
-    public IList<DataPoint> Points { get; private set; }
-    public LineSeries[] line=new LineSeries[255];
-    public IList<DataPoint>[] point = new IList<DataPoint>[255];
+    public List<DataPoint> Points { get; private set; }
+    public LineSeries[] line=new LineSeries[256];
+    public List<DataPoint>[] point = new List<DataPoint>[256];
+    public double lasttime;
 
 
     public MainViewModel() {
       this.Title = "Hosts";
       this.Points = new List<DataPoint>();
-      for (int i = 0; i < 255; i++) {
+      for (int i = 0; i < 256; i++) {
         point[i] = new List<DataPoint>();
         line[i] = new LineSeries() { StrokeThickness = 1, LineStyle=LineStyle.Solid };
       }
@@ -40,7 +41,7 @@ namespace MultiPing {
     public void Add(Double y) {
       if (Points.Count() > 100)
         Points.RemoveAt(0);
-      Points.Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(DateTime.Now), y));
+      Points.Add(new DataPoint(lasttime = OxyPlot.Axes.DateTimeAxis.ToDouble(DateTime.Now), y));      
     }
 
     public void Add(int ip,Double y) {
@@ -48,11 +49,11 @@ namespace MultiPing {
       if (point[ip].Count>0)
         if (point[ip].ElementAt(0).X < OxyPlot.Axes.TimeSpanAxis.ToDouble(then))
           point[ip].RemoveAt(0);
-      point[ip].Add(new DataPoint(OxyPlot.Axes.DateTimeAxis.ToDouble(DateTime.Now), y));
+      point[ip].Add(new DataPoint(lasttime = OxyPlot.Axes.DateTimeAxis.ToDouble(DateTime.Now), y));
     }
 
     public void Clean(int ip) {
-      var then = DateTime.Now.Subtract(new TimeSpan(0, 1, 0));
+      var then = DateTime.Now.Subtract(new TimeSpan(0, 0, 10));
       if (point[ip].Count > 0)
         if (point[ip].ElementAt(0).X < OxyPlot.Axes.TimeSpanAxis.ToDouble(then))
           point[ip].RemoveAt(0);
@@ -75,6 +76,7 @@ namespace MultiPing {
       model = new MainViewModel();
       this.DataContext = model;
       Plot1.Axes.Add(new OxyPlot.Wpf.DateTimeAxis());
+      Plot1.Axes.Add(new OxyPlot.Wpf.LinearAxis());
       //CompositionTarget.Rendering += CompositionTargetRendering;
       //Plot1.
       for (int i = 0; i < 255; i++) {

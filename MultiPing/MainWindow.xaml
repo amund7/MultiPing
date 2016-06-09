@@ -22,6 +22,7 @@
         <Label Content="{Binding Items.Count, ElementName=Results, Mode=OneWay}" HorizontalAlignment="Left" Margin="215,7,0,0" VerticalAlignment="Top" Width="33" Height="23"/>
         <Button x:Name="GraphButton" Content="Graph" Margin="0,-1,10,0" VerticalAlignment="Top" Click="GraphButton_Click" HorizontalAlignment="Right" Width="75" Visibility="Hidden"/>
         <CheckBox x:Name="Sticky" Content="Sticky" Margin="0,0,135,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="50"/>
+        <CheckBox x:Name="benchMarkCheckBox" Content="Bench" HorizontalAlignment="Left" Margin="355,0,0,0" VerticalAlignment="Top" Width="53" Visibility="Hidden"/>
 
     </Grid>
 </Window>

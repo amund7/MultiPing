@@ -85,9 +85,9 @@ namespace MultiPing {
         pingSender.PingCompleted += new PingCompletedEventHandler(PingCompletedCallback);
         pingSender.SendAsync(who, timeout, who);
       } catch (PingException ex) {
-        Console.WriteLine(who + " PingException");
+        Console.WriteLine(who + " "+ex.ToString());
       } catch (InvalidOperationException ex) {
-        Console.WriteLine(who + " InvalidOperationException");
+        Console.WriteLine(who + " "+ex.ToString());
         await Task.Delay(2000);
         pingSender.SendAsyncCancel();
       } //Thread.Sleep(2000); pingSender.SendAsync(who, timeout, who); }
@@ -117,28 +117,32 @@ namespace MultiPing {
         return;
       }
       if (reply.Status == IPStatus.Success) {
-        speed.model.Add(reply.Address.GetAddressBytes()[3],reply.RoundtripTime);
+        speed.model.Add(reply.Address.GetAddressBytes()[3], reply.RoundtripTime);
+        //speed.model.line[reply.Address.GetAddressBytes()[3]].notify reply.Plot1.InvalidatePlot(true);
         speed.Plot1.InvalidatePlot(true);
         var hits = PingResults.Where(x => x.ip.Equals(reply.Address));
         if (hits.Count() > 0)
           foreach (var p in hits) {
             p.time = (int)reply.RoundtripTime;
             p.ttl = reply.Options.Ttl;
+            speed.Plot1.Axes.First().Minimum = // set left window edge, to give better scrolling
+              speed.model.lasttime - 0.00075;
+            //speed.Plot1.Axes[1].Minimum = 100;
             if (p.fails < 0) {
               if (!(bool)Sticky.IsChecked)
                 p.fails++;
             } else
               // if (!(bool)Sticky.IsChecked)
               p.fails = 0;
-          } else {
-          pingResults.Add(new PingResult(reply.Address, (int)reply.RoundtripTime, reply.Options.Ttl, gethost));
+          } else { // if new row
+          pingResults.Add(new PingResult(reply.Address, (int)reply.RoundtripTime, reply.Options.Ttl, gethost, (bool)benchMarkCheckBox.IsChecked));
           graph.model.Add(pingResults.Count);
           graph.Plot1.InvalidatePlot(true);
         }
       } else {
         var hits = pingResults.Where(x => x.ip.ToString() == addr).FirstOrDefault();
         if (hits != null) {
-            hits.fails++;
+          hits.fails++;
           if (hits.fails < 0)
             hits.fails = 1;
           if ((hits.fails > 10)) {
@@ -146,12 +150,12 @@ namespace MultiPing {
               pingResults.Remove(hits);
               graph.model.Add(pingResults.Count);
               graph.Plot1.InvalidatePlot(true);
-            }
-            else
+            } else
               hits.fails = 10;
           }
         }
-        speed.model.Clean(int.Parse(addr.Substring(addr.LastIndexOf('.')+1)));
+        //OxyPlot.Axes.DateTimeAxis.ToDouble(new TimeSpan(0, 0, 10));
+        //speed.model.Clean(int.Parse(addr.Substring(addr.LastIndexOf('.') + 1)));
         //speed.Plot1.InvalidatePlot(true);
 
       }
