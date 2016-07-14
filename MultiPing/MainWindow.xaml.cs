@@ -189,7 +189,11 @@ namespace MultiPing {
       IPAddress temp;
       try {
         if (!IPAddress.TryParse(IPBox.Text, out temp))
-          IPBox.Text = Dns.GetHostAddresses(IPBox.Text).FirstOrDefault().ToString();
+          foreach (var addr in Dns.GetHostAddresses(IPBox.Text))
+            if (addr.AddressFamily == AddressFamily.InterNetwork) {
+              IPBox.Text = addr.ToString();
+              break;
+            }
       } catch (SocketException) { };
 
       try {
