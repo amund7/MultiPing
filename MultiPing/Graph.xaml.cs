@@ -39,7 +39,7 @@ namespace MultiPing {
 
 
     public void Add(Double y) {
-      if (Points.Count() > 100)
+      if (Points.Count() > 500)
         Points.RemoveAt(0);
       Points.Add(new DataPoint(lasttime = OxyPlot.Axes.DateTimeAxis.ToDouble(DateTime.Now), y));      
     }

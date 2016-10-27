@@ -34,6 +34,7 @@ namespace MultiPing {
     public static string manuf;
     public static MainWindow mainWin;
     public static Dispatcher disp;
+    public static bool mappingtheworld;
 
     // Our main data structure
     private ObservableCollection<PingResult> pingResults;
@@ -73,8 +74,6 @@ namespace MultiPing {
       graph.Show();
       speed = new Graph();
       speed.Show();
-
-      //PingResults.Count.PropertyChanged+=
 
     }
 
@@ -117,17 +116,21 @@ namespace MultiPing {
         return;
       }
       if (reply.Status == IPStatus.Success) {
-        speed.model.Add(reply.Address.GetAddressBytes()[3], reply.RoundtripTime);
-        //speed.model.line[reply.Address.GetAddressBytes()[3]].notify reply.Plot1.InvalidatePlot(true);
-        speed.Plot1.InvalidatePlot(true);
+        if (speed.IsVisible) {
+          speed.model.Add(reply.Address.GetAddressBytes()[3], reply.RoundtripTime);
+          //speed.model.line[reply.Address.GetAddressBytes()[3]].notify reply.Plot1.InvalidatePlot(true);
+          speed.Plot1.InvalidatePlot(true);
+        }
         var hits = PingResults.Where(x => x.ip.Equals(reply.Address));
         if (hits.Count() > 0)
           foreach (var p in hits) {
             p.time = (int)reply.RoundtripTime;
             p.ttl = reply.Options.Ttl;
-            speed.Plot1.Axes.First().Minimum = // set left window edge, to give better scrolling
+            if (speed.IsVisible) {
+              speed.Plot1.Axes.First().Minimum = // set left window edge, to give better scrolling
               speed.model.lasttime - 0.00075;
-            //speed.Plot1.Axes[1].Minimum = 100;
+              //speed.Plot1.Axes[1].Minimum = 100;
+            }
             if (p.fails < 0) {
               if (!(bool)Sticky.IsChecked)
                 p.fails++;
@@ -145,25 +148,26 @@ namespace MultiPing {
           hits.fails++;
           if (hits.fails < 0)
             hits.fails = 1;
-          if ((hits.fails > 10)) {
+          if ((hits.fails > 60)) {
             if (!(bool)Sticky.IsChecked) {
               pingResults.Remove(hits);
               graph.model.Add(pingResults.Count);
               graph.Plot1.InvalidatePlot(true);
             } else
-              hits.fails = 10;
+              hits.fails = 50;
           }
         }
         //OxyPlot.Axes.DateTimeAxis.ToDouble(new TimeSpan(0, 0, 10));
         //speed.model.Clean(int.Parse(addr.Substring(addr.LastIndexOf('.') + 1)));
         //speed.Plot1.InvalidatePlot(true);
-
+        //Results.ScrollIntoView(Results.Items[Results.Items.Count - 1]);
       }
     }
 
 
     private void PingButton_Click(object sender, RoutedEventArgs e) {
       //PingButton.IsEnabled = !continuous;
+      mappingtheworld = false;
       continuous = !continuous;
       if (continuous)
         PingButton.Content = "Stop";
@@ -242,5 +246,72 @@ namespace MultiPing {
       graph.Show();
     }
 
+    private void button_Click(object sender, RoutedEventArgs e) {
+      //PingButton.IsEnabled = !continuous;
+      continuous = false;
+      mappingtheworld = !mappingtheworld;
+      if (mappingtheworld)
+        MapTheWorldButton.Content = "Stop";
+      else
+        MapTheWorldButton.Content = "Map the world";
+
+      if (!mappingtheworld)
+        return;
+
+      Results.Items.SortDescriptions.Clear();
+      Results.Items.SortDescriptions.Add(new SortDescription(Results.Columns[0].SortMemberPath, ListSortDirection.Descending));
+      // Hide sort, ttl & color columns
+      Results.Columns[0].Visibility = Visibility.Hidden;
+      Results.Columns[2].Visibility = Visibility.Hidden;
+      Results.Columns[7].Visibility = Visibility.Hidden;
+      // Resize time & fails columns
+      Results.Columns[3].Width = new DataGridLength(30);
+      Results.Columns[6].Width = new DataGridLength(30);
+      pingResults.Clear();
+      graph.model.Clear();
+      speed.model.Clear();
+      for (int i = 0; i < 255; i++)
+        speed.model.point[i].Clear();
+      IPAddress temp;
+      try {
+        if (!IPAddress.TryParse(IPBox.Text, out temp))
+          foreach (var addr in Dns.GetHostAddresses(IPBox.Text))
+            if (addr.AddressFamily == AddressFamily.InterNetwork) {
+              IPBox.Text = addr.ToString();
+              break;
+            }
+      }
+      catch (SocketException) { };
+
+      try {
+        IPAddress ip = IPAddress.Parse(IPBox.Text);
+        Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(async () => {
+        byte lstart = ip.GetAddressBytes()[0];
+        byte kstart = ip.GetAddressBytes()[1];
+        byte jstart = ip.GetAddressBytes()[2];
+          for (byte l = lstart; l < 255; l++) {
+            for (byte k = kstart; k < 255; k++) {
+              for (byte j = jstart; j < 255; j++) {
+                IPBox.Text = new IPAddress(new byte[] { l, k, j, 1 }).ToString();
+                if (!mappingtheworld)
+                  return;
+                for (byte i = 1; i < 255; i++) {
+                  IPAddress curr = new IPAddress(new byte[] { l, k, j, i });
+                  doPing(pingSender[i], curr.ToString());
+                }
+                await Task.Delay(1000);
+                if (j == 254)
+                  jstart = 1;
+              }
+              if (k == 254)
+                kstart = 1;
+            }
+            if (l == 254)
+              lstart = 1;
+          }
+        }));
+      }
+      catch (InvalidOperationException) { Console.WriteLine("Failed in button"); }; // Catch error of ping already being sent
+    }
   }
 }

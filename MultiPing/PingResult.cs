@@ -31,7 +31,7 @@ namespace MultiPing {
     private int _fails;
 
     // Public properties, for the UI to access
-    public int sort { get { return ip.GetAddressBytes()[3]; } set { } }
+    public uint sort { get { return BitConverter.ToUInt32(ip.GetAddressBytes().Reverse().ToArray(), 0); } set { } }
     public IPAddress ip { get; set; }
     public int ttl {
       get { return _ttl; }
@@ -82,9 +82,9 @@ namespace MultiPing {
     public string color {
       get {
         if (_fails >= 0)
-          return "#" + ((15 - _fails) * 17).ToString("X2")
-                     + ((15 - _fails) * 17).ToString("X2")
-                     + ((15 - _fails) * 17).ToString("X2");
+          return "#" + (255 - _fails*4).ToString("X2")
+                     + (255 - _fails*4).ToString("X2")
+                     + (255 - _fails*4).ToString("X2");
         else
           return "#" + ((15 + _fails) * 17).ToString("X2")
                      + "FF"
@@ -108,12 +108,12 @@ namespace MultiPing {
           getHostnameAsync(null);
         hostname = "DNS search";
         // Delay this (enqueue on UI thread) to prevent UI to freeze on the first click
-        MainWindow.disp.BeginInvoke(DispatcherPriority.Background,
+        /*MainWindow.disp.BeginInvoke(DispatcherPriority.Background,
           new Action(() => {
                 mac = GetMacAddress(ip.ToString());
             if (benchmark)
               mac = stop.Elapsed.Seconds.ToString();
-          }));
+          }));*/
       }
     }
 

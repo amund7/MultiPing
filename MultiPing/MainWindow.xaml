@@ -5,14 +5,14 @@
     <Grid>
         <Button x:Name="GetIPButton" Content="Get IP" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="GetIPButton_Click"/>
         <TextBox x:Name="IPBox" HorizontalAlignment="Left" Height="23" Margin="90,7,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
-        <Button x:Name="PingButton" Content="Ping!" Margin="0,13,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="75" Click="PingButton_Click"/>
+        <Button x:Name="PingButton" Content="Ping!" Margin="0,14,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="75" Click="PingButton_Click" Height="21"/>
         <DataGrid x:Name="Results" Margin="10,35,10,10"
                     HorizontalAlignment="Stretch" 
                     HorizontalContentAlignment="Stretch" 
                     ColumnWidth="*">
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow">
-                            <Setter Property="Background" Value="{Binding color}"></Setter>
+                    <Setter Property="Background" Value="{Binding color}"></Setter>
                 </Style>
             </DataGrid.RowStyle>
         </DataGrid>
@@ -23,6 +23,7 @@
         <Button x:Name="GraphButton" Content="Graph" Margin="0,-1,10,0" VerticalAlignment="Top" Click="GraphButton_Click" HorizontalAlignment="Right" Width="75" Visibility="Hidden"/>
         <CheckBox x:Name="Sticky" Content="Sticky" Margin="0,0,135,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="50"/>
         <CheckBox x:Name="benchMarkCheckBox" Content="Bench" HorizontalAlignment="Left" Margin="355,0,0,0" VerticalAlignment="Top" Width="53" Visibility="Hidden"/>
+        <Button x:Name="MapTheWorldButton" Content="Map the world" HorizontalAlignment="Left" Margin="355,-3,0,0" VerticalAlignment="Top" Width="120" Height="17" Click="button_Click"/>
 
     </Grid>
 </Window>
