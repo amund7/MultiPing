@@ -30,7 +30,7 @@ namespace MultiPing {
 
     Ping[] pingSender = new Ping[256];
     static bool continuous = false;
-    static bool gethost = true;
+    static bool getmac = true;
     public static string manuf;
     public static MainWindow mainWin;
     public static Dispatcher disp;
@@ -138,7 +138,7 @@ namespace MultiPing {
               // if (!(bool)Sticky.IsChecked)
               p.fails = 0;
           } else { // if new row
-          pingResults.Add(new PingResult(reply.Address, (int)reply.RoundtripTime, reply.Options.Ttl, gethost, (bool)benchMarkCheckBox.IsChecked));
+          pingResults.Add(new PingResult(reply.Address, (int)reply.RoundtripTime, reply.Options.Ttl, getmac, (bool)benchMarkCheckBox.IsChecked));
           graph.model.Add(pingResults.Count);
           graph.Plot1.InvalidatePlot(true);
         }
@@ -233,7 +233,7 @@ namespace MultiPing {
     }
 
     private void CheckBox_Click(object sender, RoutedEventArgs e) {
-      gethost = (bool)((CheckBox)sender).IsChecked;
+      getmac = (bool)((CheckBox)sender).IsChecked;
     }
 
     private void Window_Closing_1(object sender, CancelEventArgs e) {
@@ -249,6 +249,8 @@ namespace MultiPing {
     private void button_Click(object sender, RoutedEventArgs e) {
       //PingButton.IsEnabled = !continuous;
       continuous = false;
+      getmac = false;
+      GetMacCheckBox.IsChecked = false;
       mappingtheworld = !mappingtheworld;
       if (mappingtheworld)
         MapTheWorldButton.Content = "Stop";

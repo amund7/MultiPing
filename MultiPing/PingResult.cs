@@ -93,27 +93,22 @@ namespace MultiPing {
     }
 
 
-    public PingResult(IPAddress IP, int Time, int TTL, bool gethost, bool benchmark) {
+    public PingResult(IPAddress IP, int Time, int TTL, bool getmac, bool benchmark) {
       ip = IP;
       _ttl = TTL;
       _time = Time;
       _fails = -10;
-      if (gethost) {
-        Stopwatch stop = new Stopwatch();
-        stop.Start();
-        Console.WriteLine("gethost " + ip);
-        if (benchmark)
-          getHostnameAsync(stop);
-        else
-          getHostnameAsync(null);
-        hostname = "DNS search";
+
+      Console.WriteLine("gethost " + ip);
+      getHostnameAsync(null);
+      hostname = "DNS...";
+
+      if (getmac) {
         // Delay this (enqueue on UI thread) to prevent UI to freeze on the first click
-        /*MainWindow.disp.BeginInvoke(DispatcherPriority.Background,
+        MainWindow.disp.BeginInvoke(DispatcherPriority.Background,
           new Action(() => {
-                mac = GetMacAddress(ip.ToString());
-            if (benchmark)
-              mac = stop.Elapsed.Seconds.ToString();
-          }));*/
+              mac = GetMacAddress(ip.ToString());
+          }));
       }
     }
 
