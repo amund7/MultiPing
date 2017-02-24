@@ -82,9 +82,9 @@ namespace MultiPing {
     public string color {
       get {
         if (_fails >= 0)
-          return "#" + (255 - _fails*4).ToString("X2")
-                     + (255 - _fails*4).ToString("X2")
-                     + (255 - _fails*4).ToString("X2");
+          return "#" + ((15 - _fails) * 17).ToString("X2")
+                     + ((15 - _fails) * 17).ToString("X2")
+                     + ((15 - _fails) * 17).ToString("X2");
         else
           return "#" + ((15 + _fails) * 17).ToString("X2")
                      + "FF"
@@ -158,7 +158,7 @@ namespace MultiPing {
           if (result.Contains('#'))
             result = result.Substring(result.IndexOf('#') + 1);
           //return stop.Elapsed.ToString();
-          return result.TrimStart();
+          return result.Trim();
         } else /*return stop.Elapsed.ToString();*/ return "";
       } catch (Exception e) { return e.ToString(); }
     }

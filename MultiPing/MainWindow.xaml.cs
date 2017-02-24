@@ -148,13 +148,13 @@ namespace MultiPing {
           hits.fails++;
           if (hits.fails < 0)
             hits.fails = 1;
-          if ((hits.fails > 60)) {
+          if ((hits.fails > 10)) {
             if (!(bool)Sticky.IsChecked) {
               pingResults.Remove(hits);
               graph.model.Add(pingResults.Count);
               graph.Plot1.InvalidatePlot(true);
             } else
-              hits.fails = 50;
+              hits.fails = 10;
           }
         }
         //OxyPlot.Axes.DateTimeAxis.ToDouble(new TimeSpan(0, 0, 10));
