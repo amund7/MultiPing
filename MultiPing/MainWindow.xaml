@@ -4,7 +4,7 @@
         Title="MultiPing" Height="448" Width="493" Closing="Window_Closing_1">
     <Grid>
         <Button x:Name="GetIPButton" Content="Get IP" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="GetIPButton_Click"/>
-        <TextBox x:Name="IPBox" HorizontalAlignment="Left" Height="23" Margin="90,7,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
+        <ComboBox x:Name="IPBox" HorizontalAlignment="Left" Height="23" Margin="90,7,0,0" Text="TextBox" VerticalAlignment="Top" Width="120" IsEditable="True"/>
         <Button x:Name="PingButton" Content="Ping!" Margin="0,14,10,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="75" Click="PingButton_Click" Height="21"/>
         <DataGrid x:Name="Results" Margin="10,35,10,10"
                     HorizontalAlignment="Stretch" 

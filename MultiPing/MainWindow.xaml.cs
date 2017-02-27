@@ -61,8 +61,12 @@ namespace MultiPing {
       mainWin = this;
       disp = this.Dispatcher;
 
-      // Get version. Crashes if within visual studio, so we have to catch that.
-      try {
+        NetworkChange.NetworkAvailabilityChanged +=
+            new NetworkAvailabilityChangedEventHandler(NetworkChange_NetworkAvailabilityChanged );
+        //SystemEvents.SessionSwitch += new SessionSwitchEventHandler(SystemEvents_SessionSwitch);
+
+        // Get version. Crashes if within visual studio, so we have to catch that.
+        try {
         var version = System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion;
         this.Title = "MultiPing v." + version.ToString();
       } catch (Exception) {
@@ -77,6 +81,9 @@ namespace MultiPing {
 
     }
 
+    private void NetworkChange_NetworkAvailabilityChanged(object sender, NetworkAvailabilityEventArgs e) {
+      GetIPButton_Click(null, null);
+    }
 
     public async void doPing(Ping pingSender, string who) {
       int timeout = 1000;
@@ -169,9 +176,10 @@ namespace MultiPing {
       //PingButton.IsEnabled = !continuous;
       mappingtheworld = false;
       continuous = !continuous;
-      if (continuous)
+      if (continuous) {
         PingButton.Content = "Stop";
-      else
+        IPBox.Items.Add(IPBox.Text);
+      } else
         PingButton.Content = "Ping";
 
       if (!continuous)
@@ -206,15 +214,18 @@ namespace MultiPing {
           //await Task.Delay(10);
           //Thread.Sleep(1000);
         }
-      }
-      catch (InvalidOperationException) { Console.WriteLine("Failed in button"); }; // Catch error of ping already being sent
+      } catch (InvalidOperationException) { Console.WriteLine("Failed in button"); }; // Catch error of ping already being sent
     }
 
     private void GetIPButton_Click(object sender, RoutedEventArgs e) {
       IPHostEntry host;
       host = Dns.GetHostEntry(Dns.GetHostName());
+
+      //IPBox.Items.Clear();
+      
       foreach (IPAddress ip in host.AddressList) {
         if (ip.AddressFamily == AddressFamily.InterNetwork) {
+          IPBox.Items.Add(ip.ToString());
           IPBox.Text = ip.ToString();
           break;
         }
