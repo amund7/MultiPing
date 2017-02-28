@@ -227,7 +227,6 @@ namespace MultiPing {
         if (ip.AddressFamily == AddressFamily.InterNetwork) {
           IPBox.Items.Add(ip.ToString());
           IPBox.Text = ip.ToString();
-          break;
         }
       }
     }
