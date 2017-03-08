@@ -223,9 +223,9 @@ namespace MultiPing {
         Task.Run(() => {
           while (continuous) {
             for (int i = 1; i < 255; i++) {
-              Thread.Sleep(5);
               doPing(pingSender[i], ipText.Substring(0, ipText.LastIndexOf('.')) + "." + i);
             }
+            Thread.Sleep(1000);
           }
         });
 
