@@ -1,4 +1,4 @@
-﻿/* MultiPing by Amund Børsand (amund.borsand@nov.com)
+﻿/* MultiPing by Amund Børsand (amundster@gmail.com)
  * march 2015
  * Idea by Jan Øyvind Lyche */
 
@@ -192,6 +192,8 @@ namespace MultiPing {
         return;
       }
 
+      Sticky_Checked(Sticky, null);
+
       Results.Items.SortDescriptions.Add(new SortDescription(Results.Columns[0].SortMemberPath, ListSortDirection.Ascending));
       // Hide sort, ttl & color columns
       Results.Columns[0].Visibility = Visibility.Hidden;
@@ -339,5 +341,12 @@ namespace MultiPing {
       }
       catch (InvalidOperationException) { Console.WriteLine("Failed in button"); }; // Catch error of ping already being sent
     }
-  }
+
+    private void Sticky_Checked(object sender, RoutedEventArgs e)  {
+            Results.Columns[8].Visibility = 
+                (bool) ((CheckBox)sender).IsChecked ? 
+                    Visibility.Visible : 
+                    Visibility.Hidden;
+        }
+    }
 }
