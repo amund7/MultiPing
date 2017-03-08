@@ -127,12 +127,13 @@ namespace MultiPing {
           speed.model.Add(reply.Address.GetAddressBytes()[3], reply.RoundtripTime);
           //speed.model.line[reply.Address.GetAddressBytes()[3]].notify reply.Plot1.InvalidatePlot(true);
           speed.Plot1.InvalidatePlot(true);
-        }
+        }       
         var hits = PingResults.Where(x => x.ip.Equals(reply.Address));
         if (hits.Count() > 0)
           foreach (var p in hits) {
             p.time = (int)reply.RoundtripTime;
             p.ttl = reply.Options.Ttl;
+            p.lastSeen = DateTime.Now;
             if (speed.IsVisible) {
               speed.Plot1.Axes.First().Minimum = // set left window edge, to give better scrolling
               speed.model.lasttime - 0.00075;

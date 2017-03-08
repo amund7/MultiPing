@@ -29,6 +29,7 @@ namespace MultiPing {
     private string _hostname;
     private string _mac;
     private int _fails;
+    private DateTime _lastSeen;
 
     // Public properties, for the UI to access
     public uint sort { get { return BitConverter.ToUInt32(ip.GetAddressBytes().Reverse().ToArray(), 0); } set { } }
@@ -91,6 +92,15 @@ namespace MultiPing {
                      + ((15 + _fails) * 17).ToString("X2");
       }
     }
+        public DateTime lastSeen
+        { get { return _lastSeen; }
+            set
+            {
+                _lastSeen = value;
+                NotifyPropertyChanged("lastSeen");
+            }
+
+        }
 
 
     public PingResult(IPAddress IP, int Time, int TTL, bool getmac, bool benchmark) {
@@ -98,6 +108,7 @@ namespace MultiPing {
       _ttl = TTL;
       _time = Time;
       _fails = -10;
+      _lastSeen = DateTime.Now;
 
       Console.WriteLine("gethost " + ip);
       getHostnameAsync(null);
