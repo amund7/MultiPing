@@ -49,24 +49,26 @@ namespace MultiPing {
 
     Graph graph;
     Graph speed;
+    private string state;
 
     public MainWindow() {
       InitializeComponent();
       pingResults = new ObservableCollection<PingResult>();
       Results.ItemsSource = pingResults;
       GetIPButton_Click(null, null);
-      for (int i=0; i<255; i++) 
+      for (int i = 0; i < 255; i++)
         pingSender[i] = new Ping();
       manuf = File.ReadAllText("manuf.txt");
       mainWin = this;
       disp = this.Dispatcher;
+      //timer = new Timer(timerCallback);
 
-        NetworkChange.NetworkAvailabilityChanged +=
-            new NetworkAvailabilityChangedEventHandler(NetworkChange_NetworkAvailabilityChanged );
-        //SystemEvents.SessionSwitch += new SessionSwitchEventHandler(SystemEvents_SessionSwitch);
+      NetworkChange.NetworkAvailabilityChanged +=
+          new NetworkAvailabilityChangedEventHandler(NetworkChange_NetworkAvailabilityChanged);
+      //SystemEvents.SessionSwitch += new SessionSwitchEventHandler(SystemEvents_SessionSwitch);
 
-        // Get version. Crashes if within visual studio, so we have to catch that.
-        try {
+      // Get version. Crashes if within visual studio, so we have to catch that.
+      try {
         var version = System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion;
         this.Title = "MultiPing v." + version.ToString();
       } catch (Exception) {
@@ -88,33 +90,36 @@ namespace MultiPing {
     public async void doPing(Ping pingSender, string who) {
       int timeout = 1000;
       try {
-        pingSender.PingCompleted += new PingCompletedEventHandler(PingCompletedCallback);
-        pingSender.SendAsync(who, timeout, who);
+        //pingSender.PingCompleted += new PingCompletedEventHandler(PingCompletedCallback);
+        var e=await pingSender.SendPingAsync(who, timeout);
+        disp.Invoke(()=>
+          DisplayReply(who, e));
       } catch (PingException ex) {
-        Console.WriteLine(who + " "+ex.ToString());
+        Console.WriteLine(who + " " + ex.ToString());
       } catch (InvalidOperationException ex) {
-        Console.WriteLine(who + " "+ex.ToString());
-        await Task.Delay(2000);
-        pingSender.SendAsyncCancel();
+        Console.WriteLine(who + " " + ex.ToString());
+        //Thread.Sleep(5000);
+        //pingSender.SendAsyncCancel();
       } //Thread.Sleep(2000); pingSender.SendAsync(who, timeout, who); }
+      catch (TaskCanceledException) { };
     }
 
 
-    private async void PingCompletedCallback(object sender, PingCompletedEventArgs e) {
+    private void PingCompletedCallback(object sender, PingCompletedEventArgs e) {
       if (e.Cancelled) {
         ((Ping)sender).PingCompleted -= PingCompletedCallback;
         return;
       }
       PingReply reply = e.Reply;
-      DisplayReply((string)e.UserState,reply);
+      DisplayReply((string)e.UserState, reply);
       ((Ping)sender).PingCompleted -= PingCompletedCallback;
 
       //speed.Plot1.InvalidatePlot(true);
 
-      if (continuous) {
+      /*if (continuous) {
         await Task.Delay(1000);
         doPing((Ping)sender, ((string)e.UserState));
-      }
+      }*/
     }
 
 
@@ -183,8 +188,9 @@ namespace MultiPing {
       } else
         PingButton.Content = "Ping";
 
-      if (!continuous)
+      if (!continuous) {
         return;
+      }
 
       Results.Items.SortDescriptions.Add(new SortDescription(Results.Columns[0].SortMemberPath, ListSortDirection.Ascending));
       // Hide sort, ttl & color columns
@@ -210,13 +216,20 @@ namespace MultiPing {
       } catch (SocketException) { };
 
       try {
-        for (int i = 1; i < 255; i++) {
-          doPing(pingSender[i], IPBox.Text.Substring(0, IPBox.Text.LastIndexOf('.')) + "." + i);
-          //await Task.Delay(10);
-          //Thread.Sleep(1000);
-        }
+        state = IPBox.Text;
+        string ipText = (string)state;
+        Task.Run(() => {
+          while (continuous) {
+            for (int i = 1; i < 255; i++) {
+              Thread.Sleep(5);
+              doPing(pingSender[i], ipText.Substring(0, ipText.LastIndexOf('.')) + "." + i);
+            }
+          }
+        });
+
       } catch (InvalidOperationException) { Console.WriteLine("Failed in button"); }; // Catch error of ping already being sent
     }
+
 
     private void GetIPButton_Click(object sender, RoutedEventArgs e) {
       IPHostEntry host;
