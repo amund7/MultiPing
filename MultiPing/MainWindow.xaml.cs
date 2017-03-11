@@ -63,8 +63,8 @@ namespace MultiPing {
       disp = this.Dispatcher;
       //timer = new Timer(timerCallback);
 
-      NetworkChange.NetworkAvailabilityChanged +=
-          new NetworkAvailabilityChangedEventHandler(NetworkChange_NetworkAvailabilityChanged);
+      //NetworkChange.NetworkAvailabilityChanged +=
+      //    new NetworkAvailabilityChangedEventHandler(NetworkChange_NetworkAvailabilityChanged);
       //SystemEvents.SessionSwitch += new SessionSwitchEventHandler(SystemEvents_SessionSwitch);
 
       // Get version. Crashes if within visual studio, so we have to catch that.
@@ -84,7 +84,8 @@ namespace MultiPing {
     }
 
     private void NetworkChange_NetworkAvailabilityChanged(object sender, NetworkAvailabilityEventArgs e) {
-      GetIPButton_Click(null, null);
+      Dispatcher.Invoke(() => 
+        GetIPButton_Click(null, null));
     }
 
     public async void doPing(Ping pingSender, string who) {
