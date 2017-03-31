@@ -103,7 +103,7 @@ namespace MultiPing {
         }
 
 
-    public PingResult(IPAddress IP, int Time, int TTL, bool getmac, bool benchmark) {
+    public PingResult(IPAddress IP, int Time, int TTL, bool getmac, bool showmac, bool benchmark) {
       ip = IP;
       _ttl = TTL;
       _time = Time;
@@ -118,7 +118,7 @@ namespace MultiPing {
         // Delay this (enqueue on UI thread) to prevent UI to freeze on the first click
         MainWindow.disp.BeginInvoke(DispatcherPriority.Background,
           new Action(() => {
-              mac = GetMacAddress(ip.ToString());
+              mac = GetMacAddress(ip.ToString(), showmac);
           }));
       }
     }
@@ -145,7 +145,7 @@ namespace MultiPing {
     }
     
 
-    public string GetMacAddress(string ipAddress) {
+    public string GetMacAddress(string ipAddress, bool showmac) {
       try {
         //Console.WriteLine("zzzz...");
         //Thread.Sleep(1999);
@@ -163,7 +163,14 @@ namespace MultiPing {
         string strOutput = pProcess.StandardOutput.ReadToEnd();
         string[] substrings = strOutput.Split('-');
         if (substrings.Length >= 8) {
-          string expression = substrings[3].Substring(Math.Max(0, substrings[3].Length - 2)) + ":" + substrings[4] + ":" + substrings[5] + "(.*?)\n";
+        string expression = substrings[3].Substring(Math.Max(0, substrings[3].Length - 2)) + ":" + substrings[4] + ":" + substrings[5] + "(.*?)\n";
+          if (showmac)
+            return (substrings[4]+":"+
+                    substrings[5]+":"+
+                    substrings[6]+":"+
+                    substrings[7]+":"+
+                    substrings[8].Substring(0,2))
+                    .ToUpper();
           var matches = Regex.Match(MainWindow.manuf, expression, RegexOptions.IgnoreCase);
           string result = matches.Groups[1].Value;
           if (result.Contains('#'))
