@@ -226,8 +226,8 @@ namespace MultiPing {
           while (continuous) {
             for (int i = 1; i < 255; i++) {
               doPing(pingSender[i], ipText.Substring(0, ipText.LastIndexOf('.')) + "." + i);
+              Thread.Sleep(6);
             }
-            Thread.Sleep(1000);
           }
         });
 
