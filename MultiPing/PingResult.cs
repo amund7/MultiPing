@@ -110,16 +110,17 @@ namespace MultiPing {
       _fails = -10;
       _lastSeen = DateTime.Now;
 
-      Console.WriteLine("gethost " + ip);
-      getHostnameAsync(null);
+      Task.Run(() => getHostnameAsync(null));
       hostname = "DNS...";
 
       if (getmac) {
         // Delay this (enqueue on UI thread) to prevent UI to freeze on the first click
-        MainWindow.disp.BeginInvoke(DispatcherPriority.Background,
-          new Action(() => {
+        //MainWindow.disp.BeginInvoke(DispatcherPriority.Background,
+        Task.Run( () => {
+          //Console.WriteLine("Getting mac for " + ip.ToString());
               mac = GetMacAddress(ip.ToString(), showmac);
-          }));
+          //Console.WriteLine("Got mac "+ mac +" for " + ip.ToString());
+        });
       }
     }
 
@@ -127,8 +128,8 @@ namespace MultiPing {
       try {
         //Console.WriteLine("getting hostname for " + ip);
         var host = await Dns.GetHostEntryAsync(ip);
-        //foreach (string s in host.Aliases)
-        //  Console.WriteLine(s);
+        foreach (string s in host.Aliases)
+          Console.WriteLine(s);
         hostname = host.HostName;
         if (watch != null)
           hostname = watch.Elapsed.Seconds.ToString();

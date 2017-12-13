@@ -89,16 +89,19 @@ namespace MultiPing {
         GetIPButton_Click(null, null));
     }
 
-    public async void doPing(Ping pingSender, string who) {
+    public async Task doPing(Ping pingSender, string who) {
       int timeout = 1000;
+      //Console.WriteLine("Pinging " + who);
       try {
         //pingSender.PingCompleted += new PingCompletedEventHandler(PingCompletedCallback);
-        var e=await pingSender.SendPingAsync(who, timeout);
-        disp.Invoke(()=>
+        var e = await pingSender.SendPingAsync(who, timeout);
+        disp.Invoke(() =>
           DisplayReply(who, e));
-      } catch (PingException ex) {
+      }
+      catch (PingException ex) {
         Console.WriteLine(who + " " + ex.ToString());
-      } catch (InvalidOperationException ex) {
+      }
+      catch (InvalidOperationException ex) {
         Console.WriteLine(who + " " + ex.ToString());
         //Thread.Sleep(5000);
         //pingSender.SendAsyncCancel();
@@ -180,7 +183,7 @@ namespace MultiPing {
     }
 
 
-    private void PingButton_Click(object sender, RoutedEventArgs e) {
+    private async void PingButton_Click(object sender, RoutedEventArgs e) {
       //PingButton.IsEnabled = !continuous;
       mappingtheworld = false;
       continuous = !continuous;
@@ -222,20 +225,26 @@ namespace MultiPing {
       try {
         state = IPBox.Text;
         string ipText = (string)state;
-        Task.Run(() => {
-          while (continuous) {
-            for (int i = 1; i < 255; i++) {
-              doPing(pingSender[i], ipText.Substring(0, ipText.LastIndexOf('.')) + "." + i);
-              Thread.Sleep(6);
-            }
-          }
-        });
+        for (int i = 1; i < 255; i++) {
+          SpawnPingLoop(i,
+            ipText.Substring(0, ipText.LastIndexOf('.')) + "." + i);
+        }
+      }
+      catch (InvalidOperationException) { Console.WriteLine("Failed in button"); }; // Catch error of ping already being sent
+    }
 
-      } catch (InvalidOperationException) { Console.WriteLine("Failed in button"); }; // Catch error of ping already being sent
+    void SpawnPingLoop(int i, string s) {
+      Task.Run(async () => {
+        while (continuous) {
+          await doPing(pingSender[i], s);
+          await Task.Delay(1000);
+        }
+      });
     }
 
 
-    private void GetIPButton_Click(object sender, RoutedEventArgs e) {
+
+private void GetIPButton_Click(object sender, RoutedEventArgs e) {
       IPHostEntry host;
       host = Dns.GetHostEntry(Dns.GetHostName());
 
@@ -269,6 +278,7 @@ namespace MultiPing {
     }
 
     private void Window_Closing_1(object sender, CancelEventArgs e) {
+      continuous = false;
       graph.Close();
       speed.Close();
     }
