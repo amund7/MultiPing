@@ -18,6 +18,8 @@ using System.IO;
 using System.ComponentModel;
 using System.Reflection;
 using System.Threading;
+using System.Collections.Generic;
+using System.Text;
 
 namespace MultiPing {
   /// <summary>
@@ -72,7 +74,8 @@ namespace MultiPing {
       try {
         var version = System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion;
         this.Title = "MultiPing v." + version.ToString();
-      } catch (Exception) {
+      }
+      catch (Exception) {
         var version = Assembly.GetExecutingAssembly().GetName().Version;
         this.Title = "MultPing development build " + version.ToString();
       }
@@ -85,7 +88,7 @@ namespace MultiPing {
     }
 
     private void NetworkChange_NetworkAvailabilityChanged(object sender, NetworkAvailabilityEventArgs e) {
-      Dispatcher.Invoke(() => 
+      Dispatcher.Invoke(() =>
         GetIPButton_Click(null, null));
     }
 
@@ -132,17 +135,17 @@ namespace MultiPing {
       if (reply == null) {
         return;
       }
-      if (reply.Status == IPStatus.Success) {
+      if (reply.Status == IPStatus.Success || reply.Status == IPStatus.TtlExpired) {
         if (speed.IsVisible) {
           speed.model.Add(reply.Address.GetAddressBytes()[3], reply.RoundtripTime);
           //speed.model.line[reply.Address.GetAddressBytes()[3]].notify reply.Plot1.InvalidatePlot(true);
           speed.Plot1.InvalidatePlot(true);
-        }       
+        }
         var hits = PingResults.Where(x => x.ip.Equals(reply.Address));
         if (hits.Count() > 0)
           foreach (var p in hits) {
             p.time = (int)reply.RoundtripTime;
-            p.ttl = reply.Options.Ttl;
+            p.ttl = reply.Options == null ? 0 : reply.Options.Ttl;
             p.lastSeen = DateTime.Now;
             if (speed.IsVisible) {
               speed.Plot1.Axes.First().Minimum = // set left window edge, to give better scrolling
@@ -156,7 +159,14 @@ namespace MultiPing {
               // if (!(bool)Sticky.IsChecked)
               p.fails = 0;
           } else { // if new row
-          pingResults.Add(new PingResult(reply.Address, (int)reply.RoundtripTime, reply.Options.Ttl, getmac, showmac, (bool)benchMarkCheckBox.IsChecked));
+          pingResults.Add(
+            new PingResult(
+              reply.Address,
+              (int)reply.RoundtripTime,
+              reply.Options == null ? 0 : reply.Options.Ttl,
+              getmac,
+              showmac,
+              (bool)benchMarkCheckBox.IsChecked));
           graph.model.Add(pingResults.Count);
           graph.Plot1.InvalidatePlot(true);
         }
@@ -220,7 +230,8 @@ namespace MultiPing {
               IPBox.Text = addr.ToString();
               break;
             }
-      } catch (SocketException) { };
+      }
+      catch (SocketException) { };
 
       try {
         state = IPBox.Text;
@@ -244,12 +255,12 @@ namespace MultiPing {
 
 
 
-private void GetIPButton_Click(object sender, RoutedEventArgs e) {
+    private void GetIPButton_Click(object sender, RoutedEventArgs e) {
       IPHostEntry host;
       host = Dns.GetHostEntry(Dns.GetHostName());
 
       //IPBox.Items.Clear();
-      
+
       foreach (IPAddress ip in host.AddressList) {
         if (ip.AddressFamily == AddressFamily.InterNetwork) {
           IPBox.Items.Add(ip.ToString());
@@ -330,9 +341,9 @@ private void GetIPButton_Click(object sender, RoutedEventArgs e) {
       try {
         IPAddress ip = IPAddress.Parse(IPBox.Text);
         Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(async () => {
-        byte lstart = ip.GetAddressBytes()[0];
-        byte kstart = ip.GetAddressBytes()[1];
-        byte jstart = ip.GetAddressBytes()[2];
+          byte lstart = ip.GetAddressBytes()[0];
+          byte kstart = ip.GetAddressBytes()[1];
+          byte jstart = ip.GetAddressBytes()[2];
           for (byte l = lstart; l < 255; l++) {
             for (byte k = kstart; k < 255; k++) {
               for (byte j = jstart; j < 255; j++) {
@@ -358,11 +369,95 @@ private void GetIPButton_Click(object sender, RoutedEventArgs e) {
       catch (InvalidOperationException) { Console.WriteLine("Failed in button"); }; // Catch error of ping already being sent
     }
 
-    private void Sticky_Checked(object sender, RoutedEventArgs e)  {
-            Results.Columns[8].Visibility = 
-                (bool) ((CheckBox)sender).IsChecked ? 
-                    Visibility.Visible : 
-                    Visibility.Hidden;
-        }
+    private void Sticky_Checked(object sender, RoutedEventArgs e) {
+      Results.Columns[8].Visibility =
+          (bool)((CheckBox)sender).IsChecked ?
+              Visibility.Visible :
+              Visibility.Hidden;
     }
+
+    private async void Button_Click_1(object sender, RoutedEventArgs e) {
+      mappingtheworld = false;
+      continuous = !continuous;
+      if (continuous) {
+        TracertButton.Content = "Stop";
+        IPBox.Items.Add(IPBox.Text);
+      } else
+        TracertButton.Content = "TraceRoute";
+
+      if (!continuous) {
+        return;
+      }
+
+      Sticky_Checked(Sticky, null);
+      GetMacCheckBox.IsChecked = false;
+      getmac = false;
+
+      Results.Items.SortDescriptions.Clear();
+      // Hide sort, ttl & color columns
+      Results.Columns[0].Visibility = Visibility.Hidden;
+      Results.Columns[2].Visibility = Visibility.Hidden;
+      Results.Columns[7].Visibility = Visibility.Hidden;
+      // Resize time & fails columns
+      Results.Columns[3].Width = new DataGridLength(30);
+      Results.Columns[6].Width = new DataGridLength(30);
+      pingResults.Clear();
+
+      IPAddress temp;
+      try {
+        if (!IPAddress.TryParse(IPBox.Text, out temp))
+          foreach (var addr in Dns.GetHostAddresses(IPBox.Text))
+            if (addr.AddressFamily == AddressFamily.InterNetwork) {
+              IPBox.Text = addr.ToString();
+              break;
+            }
+      }
+      catch (SocketException) { };
+
+      //Task.Run(async () => {
+      while (continuous) {
+        GetTraceRoute(IPBox.Text);
+        await Task.Delay(1000);
+      }
+      ///});
+    }
+
+
+    // Tracert code from here: https://stackoverflow.com/questions/142614/traceroute-and-ping-in-c-sharp/2688152#2688152
+    private const string Data = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    public IEnumerable<IPAddress> GetTraceRoute(string hostNameOrAddress) {
+      return GetTraceRoute(hostNameOrAddress, 1);
+    }
+    private IEnumerable<IPAddress> GetTraceRoute(string hostNameOrAddress, int ttl) {
+      Ping pinger = new Ping();
+      PingOptions pingerOptions = new PingOptions(ttl, true);
+      int timeout = 10000;
+      byte[] buffer = Encoding.ASCII.GetBytes(Data);
+      PingReply reply = default(PingReply);
+
+      reply = pinger.Send(hostNameOrAddress, timeout, buffer, pingerOptions);
+
+      List<IPAddress> result = new List<IPAddress>();
+      if (reply.Status == IPStatus.Success) {
+        DisplayReply(reply.Address.ToString(), reply);
+        result.Add(reply.Address);
+      } else if (reply.Status == IPStatus.TtlExpired || reply.Status == IPStatus.TimedOut) {
+        //add the currently returned address if an address was found with this TTL
+        if (reply.Status == IPStatus.TtlExpired) {
+          result.Add(reply.Address);
+          DisplayReply(reply.Address.ToString(), reply);
+        }
+        //recurse to get the next address...
+        IEnumerable<IPAddress> tempResult = default(IEnumerable<IPAddress>);
+        tempResult = GetTraceRoute(hostNameOrAddress, ttl + 1);
+        result.AddRange(tempResult);
+      } else {
+        DisplayReply(reply.Address.ToString(), reply);
+        //failure 
+      }
+
+      return result;
+    }
+  }
 }
+

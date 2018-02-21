@@ -24,6 +24,7 @@
         <CheckBox x:Name="Sticky" Content="Sticky" Margin="0,0,135,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="50" Click="Sticky_Checked"/>
         <CheckBox x:Name="benchMarkCheckBox" Content="Bench" HorizontalAlignment="Left" Margin="355,0,0,0" VerticalAlignment="Top" Width="53" Visibility="Hidden"/>
         <Button x:Name="MapTheWorldButton" Content="Map the world" Margin="0,-3,10,0" VerticalAlignment="Top" Height="17" Click="button_Click" HorizontalAlignment="Right" Width="90"/>
+        <Button x:Name="TracertButton" Content="TraceRoute" HorizontalAlignment="Left" Margin="386,39,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click_1"/>
 
     </Grid>
 </Window>
