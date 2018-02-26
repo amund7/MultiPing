@@ -135,13 +135,13 @@ namespace MultiPing {
       if (reply == null) {
         return;
       }
-      if (reply.Status == IPStatus.Success || reply.Status == IPStatus.TtlExpired) {
-        if (speed.IsVisible) {
+      if (reply.Status == IPStatus.Success || reply.Status == IPStatus.TtlExpired || addr.Contains("0.0.0.")) {
+        if (speed.IsVisible && reply.Address!=null) {
           speed.model.Add(reply.Address.GetAddressBytes()[3], reply.RoundtripTime);
           //speed.model.line[reply.Address.GetAddressBytes()[3]].notify reply.Plot1.InvalidatePlot(true);
           speed.Plot1.InvalidatePlot(true);
         }
-        var hits = PingResults.Where(x => x.ip.Equals(reply.Address));
+        var hits = PingResults.Where(x => x.ip.ToString()==addr);
         if (hits.Count() > 0)
           foreach (var p in hits) {
             p.time = (int)reply.RoundtripTime;
@@ -161,7 +161,7 @@ namespace MultiPing {
           } else { // if new row
           pingResults.Add(
             new PingResult(
-              reply.Address,
+              IPAddress.Parse(addr),
               (int)reply.RoundtripTime,
               reply.Options == null ? 0 : reply.Options.Ttl,
               getmac,
@@ -414,12 +414,16 @@ namespace MultiPing {
       }
       catch (SocketException) { };
 
-      //Task.Run(async () => {
-      while (continuous) {
-        GetTraceRoute(IPBox.Text);
-        await Task.Delay(1000);
-      }
-      ///});
+      var ip = IPBox.Text;
+
+      await Task.Run(async () => {
+        while (continuous) {
+          /*foreach (var p in pingResults)
+            p.fails++;*/
+          GetTraceRoute(ip);
+          await Task.Delay(1000);
+        }
+      });
     }
 
 
@@ -429,30 +433,36 @@ namespace MultiPing {
       return GetTraceRoute(hostNameOrAddress, 1);
     }
     private IEnumerable<IPAddress> GetTraceRoute(string hostNameOrAddress, int ttl) {
+      List<IPAddress> result = new List<IPAddress>();
+      if (!continuous)
+        return result;
       Ping pinger = new Ping();
       PingOptions pingerOptions = new PingOptions(ttl, true);
-      int timeout = 10000;
+      int timeout = 1000;
       byte[] buffer = Encoding.ASCII.GetBytes(Data);
       PingReply reply = default(PingReply);
 
       reply = pinger.Send(hostNameOrAddress, timeout, buffer, pingerOptions);
 
-      List<IPAddress> result = new List<IPAddress>();
       if (reply.Status == IPStatus.Success) {
-        DisplayReply(reply.Address.ToString(), reply);
+        Dispatcher.Invoke(() => DisplayReply(reply.Address.ToString(), reply));
         result.Add(reply.Address);
-      } else if (reply.Status == IPStatus.TtlExpired || reply.Status == IPStatus.TimedOut) {
+      } else if (reply.Status == IPStatus.TtlExpired || reply.Status == IPStatus.TimedOut && ttl<40) {
         //add the currently returned address if an address was found with this TTL
-        if (reply.Status == IPStatus.TtlExpired) {
-          result.Add(reply.Address);
-          DisplayReply(reply.Address.ToString(), reply);
-        }
+        //if (reply.Status == IPStatus.TtlExpired) {
+          //result.Add(reply.Address);
+          if (reply.Address != null)
+            Dispatcher.Invoke(() => DisplayReply(reply.Address.ToString(), reply));
+          else {
+            Dispatcher.Invoke(() => DisplayReply("0.0.0."+(byte)ttl, reply));
+          }
+        //}
         //recurse to get the next address...
         IEnumerable<IPAddress> tempResult = default(IEnumerable<IPAddress>);
         tempResult = GetTraceRoute(hostNameOrAddress, ttl + 1);
         result.AddRange(tempResult);
       } else {
-        DisplayReply(reply.Address.ToString(), reply);
+        //Dispatcher.Invoke(() => DisplayReply(ttl.ToString(), reply));
         //failure 
       }
 

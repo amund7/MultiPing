@@ -137,7 +137,7 @@ namespace MultiPing {
         /*DnsEndPoint dns = new DnsEndPoint(ip.ToString(), 80);
         hostname = dns.Host;*/
       }
-      catch (SocketException) {
+      catch (Exception) {
         if (watch != null)
           hostname = watch.Elapsed.Seconds.ToString();
         else
