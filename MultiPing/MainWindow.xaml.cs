@@ -446,16 +446,18 @@ namespace MultiPing {
 
       if (reply.Status == IPStatus.Success) {
         Dispatcher.Invoke(() => DisplayReply(reply.Address.ToString(), reply));
+        //doPing(pinger,hostNameOrAddress);
         result.Add(reply.Address);
       } else if (reply.Status == IPStatus.TtlExpired || reply.Status == IPStatus.TimedOut && ttl<40) {
         //add the currently returned address if an address was found with this TTL
         //if (reply.Status == IPStatus.TtlExpired) {
-          //result.Add(reply.Address);
-          if (reply.Address != null)
-            Dispatcher.Invoke(() => DisplayReply(reply.Address.ToString(), reply));
-          else {
-            Dispatcher.Invoke(() => DisplayReply("0.0.0."+(byte)ttl, reply));
-          }
+        //result.Add(reply.Address);
+        if (reply.Address != null)
+          //Dispatcher.Invoke(() => DisplayReply(reply.Address.ToString(), reply));
+          doPing(pinger, reply.Address.ToString());
+        else {
+          Dispatcher.Invoke(() => DisplayReply("0.0.0." + (byte)ttl, reply));
+        }
         //}
         //recurse to get the next address...
         IEnumerable<IPAddress> tempResult = default(IEnumerable<IPAddress>);
