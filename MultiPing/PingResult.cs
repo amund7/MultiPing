@@ -164,9 +164,10 @@ namespace MultiPing {
         string strOutput = pProcess.StandardOutput.ReadToEnd();
         string[] substrings = strOutput.Split('-');
         if (substrings.Length >= 8) {
-        string expression = substrings[3].Substring(Math.Max(0, substrings[3].Length - 2)) + ":" + substrings[4] + ":" + substrings[5] + "(.*?)\n";
+        string expression = substrings[3].Substring(Math.Max(0, substrings[3].Length - 2)) + ":" + substrings[4] + ":" + substrings[5] + "(.*)";
           if (showmac)
-            return (substrings[4]+":"+
+            return (substrings[3].Substring(Math.Max(0, substrings[3].Length - 2))+":"+
+                    substrings[4]+":"+
                     substrings[5]+":"+
                     substrings[6]+":"+
                     substrings[7]+":"+
@@ -174,8 +175,8 @@ namespace MultiPing {
                     .ToUpper();
           var matches = Regex.Match(MainWindow.manuf, expression, RegexOptions.IgnoreCase);
           string result = matches.Groups[1].Value;
-          if (result.Contains('#'))
-            result = result.Substring(result.IndexOf('#') + 1);
+          if (result.Contains('\t'))
+            result = result.Substring(result.LastIndexOf('\t') + 1);
           //return stop.Elapsed.ToString();
           return result.Trim();
         } else /*return stop.Elapsed.ToString();*/ return "";
